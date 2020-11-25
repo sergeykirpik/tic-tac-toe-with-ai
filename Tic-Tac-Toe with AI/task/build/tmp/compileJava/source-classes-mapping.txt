@@ -16,13 +16,13 @@ tictactoe/Move.java
  tictactoe.Move
 tictactoe/exception/InvalidMoveException.java
  tictactoe.exception.InvalidMoveException
+tictactoe/exception/InvalidGameStateException.java
+ tictactoe.exception.InvalidGameStateException
+tictactoe/player/User.java
+ tictactoe.player.User
+tictactoe/GameField.java
+ tictactoe.GameField
 tictactoe/player/MediumBot.java
  tictactoe.player.MediumBot
 tictactoe/Main.java
  tictactoe.Main
-tictactoe/GameField.java
- tictactoe.GameField
-tictactoe/player/User.java
- tictactoe.player.User
-tictactoe/exception/InvalidGameStateException.java
- tictactoe.exception.InvalidGameStateException

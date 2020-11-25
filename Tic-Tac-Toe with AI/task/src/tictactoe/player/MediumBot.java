@@ -47,20 +47,13 @@ public class MediumBot extends AbstractPlayer {
     private Move analyzeMove(int row, int col, char player) {
         GameState moveResult = game.analyzeMove(row, col, player);
         int score = 0;
-        char currentPlayer = game.currentPlayer();
         boolean haveWinner =
             moveResult == GameState.X_WINS ||
             moveResult == GameState.O_WINS;
 
         if (haveWinner) {
             score = 1;
-            boolean checkWin =
-                moveResult == GameState.X_WINS &&
-                currentPlayer == Game.PLAYER_X;
-            checkWin |=
-                moveResult == GameState.O_WINS &&
-                currentPlayer == Game.PLAYER_O;
-
+            boolean checkWin = moveResult.winner() == playerSymbol;
             if (checkWin) {
                 score = 2;
             }
