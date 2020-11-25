@@ -1,6 +1,7 @@
 package tictactoe;
 
 import tictactoe.exception.ImpossibleGameFieldStateException;
+import tictactoe.exception.InvalidGameStateException;
 import tictactoe.exception.InvalidMoveException;
 
 public class Game {
@@ -9,40 +10,25 @@ public class Game {
 
     public final GameField field = new GameField();
 
-    public void makeMove(int userCol, int userRow) {
-        if (!isCellEmpty(userCol, userRow)) {
+    public void makeMove(int row, int col) {
+        if (!isCellEmpty(row, col)) {
             throw new InvalidMoveException("Cell is already occupied!");
         }
-        int col = toFieldCol(userCol);
-        int row = toFieldRow(userRow);
         field.set(row, col, currentPlayer());
     }
 
-    public GameState analyzeMove(int userCol, int userRow, char player) {
-        if (!isCellEmpty(userCol, userRow)) {
+    public GameState analyzeMove(int row, int col, char player) {
+        if (!isCellEmpty(row, col)) {
             throw new InvalidMoveException("Cell is already occupied!");
         }
-        int col = toFieldCol(userCol);
-        int row = toFieldRow(userRow);
-
         field.set(row, col, player);
         GameState moveResult = currentState();
-        field.set(row, col, CellType.EMPTY);
+        field.clear(row, col);
         return moveResult;
     }
 
-    public boolean isCellEmpty(int userCol, int userRow) {
-        int col = toFieldCol(userCol);
-        int row = toFieldRow(userRow);
+    public boolean isCellEmpty(int row, int col) {
         return field.isEmpty(row, col);
-    }
-
-    private int toFieldCol(int userCol) {
-        return userCol - 1;
-    }
-
-    private int toFieldRow(int userRow) {
-        return GameField.SIZE - userRow;
     }
 
     public char currentPlayer() {
@@ -66,7 +52,7 @@ public class Game {
         if (oWins) {
             return GameState.O_WINS;
         }
-        int countEmpty = field.count(CellType.EMPTY);
+        int countEmpty = field.countEmptyCells();
         if (countEmpty == 0) {
             return GameState.DRAW;
         }
@@ -116,4 +102,10 @@ public class Game {
         return check1 || check2;
     }
 
+    public void undoMove(int row, int col) {
+        if (isCellEmpty(row, col)) {
+            throw new InvalidGameStateException("Can not undo move!");
+        }
+        field.clear(row, col);
+    }
 }

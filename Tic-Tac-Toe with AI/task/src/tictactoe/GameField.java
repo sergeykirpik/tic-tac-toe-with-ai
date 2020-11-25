@@ -5,11 +5,12 @@ import java.io.PrintStream;
 
 public class GameField {
     public static int SIZE = 3;
+    public static char EMPTY_CELL = ' ';
 
     private String state = emptyState();
     
     public void setState(String state) {
-        this.state = state.replace('_', CellType.EMPTY.symbol);
+        this.state = state.replace('_', EMPTY_CELL);
     }
     
     public char get(int row, int col) {
@@ -22,20 +23,20 @@ public class GameField {
         setState(newState);
     }
 
-    public void set(int row, int col, CellType cellType) {
-        set(row, col, cellType.symbol);
-    }
-
     public void clear() {
         setState(emptyState());
     }
 
+    public void clear(int row, int col) {
+        set(row, col, EMPTY_CELL);
+    }
+
     private String emptyState() {
-        return String.valueOf(CellType.EMPTY.symbol).repeat(9);
+        return String.valueOf(EMPTY_CELL).repeat(9);
     }
 
     public boolean isEmpty(int row, int col) {
-        return get(row, col) == CellType.EMPTY.symbol;
+        return get(row, col) == EMPTY_CELL;
     }
 
     public int count(char cellValue) {
@@ -50,12 +51,8 @@ public class GameField {
         return count;
     }
 
-    public int count(CellType cellType) {
-        return count(cellType.symbol);
-    }
-
     public int countEmptyCells() {
-        return count(CellType.EMPTY);
+        return count(EMPTY_CELL);
     }
 
     @Override
@@ -76,5 +73,13 @@ public class GameField {
 
     private int index(int row, int col) {
         return row * SIZE + col;
+    }
+
+    public int rows() {
+        return GameField.SIZE;
+    }
+
+    public int cols() {
+        return GameField.SIZE;
     }
 }

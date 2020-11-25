@@ -334,6 +334,440 @@ files:
         }
     }
   learner_created: false
+- name: src/tictactoe/player/EasyBot.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+    import tictactoe.exception.InvalidGameStateException;
+
+    import java.util.Random;
+
+    public class EasyBot extends AbstractPlayer {
+
+        private final Random randomGen = new Random();
+
+        public EasyBot(Game game) {
+            super(game);
+        }
+
+        @Override
+        public void makeMove() {
+            System.out.println("Making move level \"easy\"");
+            if (game.field.countEmptyCells() == 0) {
+                throw new InvalidGameStateException("No more free cells!");
+            }
+            while (true) {
+                int row = randomGen.nextInt(game.field.rows());
+                int col = randomGen.nextInt(game.field.cols());
+                if (game.isCellEmpty(row, col)) {
+                    game.makeMove(row, col);
+                    break;
+                }
+            }
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/player/Player.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    public interface Player {
+        void makeMove();
+    }
+  learner_created: true
+- name: src/tictactoe/GameField.java
+  visible: true
+  text: "package tictactoe;\n\nimport java.io.ByteArrayOutputStream;\nimport java.io.PrintStream;\n\
+    \npublic class GameField {\n    public static int SIZE = 3;\n    public static\
+    \ char EMPTY_CELL = ' ';\n\n    private String state = emptyState();\n    \n \
+    \   public void setState(String state) {\n        this.state = state.replace('_',\
+    \ EMPTY_CELL);\n    }\n    \n    public char get(int row, int col) {\n       \
+    \ return state.charAt(index(row, col));\n    }\n\n    public void set(int row,\
+    \ int col, char val) {\n        int index = index(row, col);\n        String newState\
+    \ = state.substring(0, index) + val + state.substring(index + 1);\n        setState(newState);\n\
+    \    }\n\n    public void clear() {\n        setState(emptyState());\n    }\n\n\
+    \    public void clear(int row, int col) {\n        set(row, col, EMPTY_CELL);\n\
+    \    }\n\n    private String emptyState() {\n        return String.valueOf(EMPTY_CELL).repeat(9);\n\
+    \    }\n\n    public boolean isEmpty(int row, int col) {\n        return get(row,\
+    \ col) == EMPTY_CELL;\n    }\n\n    public int count(char cellValue) {\n     \
+    \   int count = 0;\n        for (int row = 0; row < SIZE; row++) {\n         \
+    \   for (int col = 0; col < SIZE; col++) {\n                if (get(row, col)\
+    \ == cellValue) {\n                    count++;\n                }\n         \
+    \   }\n        }\n        return count;\n    }\n\n    public int countEmptyCells()\
+    \ {\n        return count(EMPTY_CELL);\n    }\n\n    @Override\n    public String\
+    \ toString() {\n        ByteArrayOutputStream baos = new ByteArrayOutputStream();\n\
+    \        PrintStream out = new PrintStream(baos);\n        out.println(\"-\".repeat(9));\n\
+    \        for (int row = 0; row < SIZE; row++) {\n            out.print(\"| \"\
+    );\n            for (int col = 0; col < SIZE; col++) {\n                out.printf(\"\
+    %c \", get(row, col));\n            }\n            out.println(\"|\");\n     \
+    \   }\n        out.println(\"-\".repeat(9));\n        return baos.toString();\n\
+    \    }\n\n    private int index(int row, int col) {\n        return row * SIZE\
+    \ + col;\n    }\n\n    public int rows() {\n        return GameField.SIZE;\n \
+    \   }\n\n    public int cols() {\n        return GameField.SIZE;\n    }\n}\n"
+  learner_created: true
+- name: src/tictactoe/player/MediumBot.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+    import tictactoe.GameState;
+    import tictactoe.Move;
+
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.Random;
+
+    public class MediumBot extends AbstractPlayer {
+        private static final Random randomGen = new Random();
+
+        public MediumBot(Game game) {
+            super(game);
+        }
+
+        @Override
+        public void makeMove() {
+            System.out.println("Making move level \"medium\"");
+            List<Move> moveList = new ArrayList<>();
+            int maxScore = 0;
+            for (int row = 0; row < game.field.rows(); row++) {
+                for (int col = 0; col < game.field.cols(); col++) {
+                     if (game.isCellEmpty(row, col)) {
+                         Move moveX = analyzeMove(row, col, Game.PLAYER_X);
+                         Move moveO = analyzeMove(row, col, Game.PLAYER_O);
+                         Move moveWithMaxScore = moveX;
+                         if (moveO.score() > moveX.score()) {
+                             moveWithMaxScore = moveO;
+                         }
+                         maxScore = Math.max(maxScore, moveWithMaxScore.score());
+                         moveList.add(moveWithMaxScore);
+                     }
+                }
+            }
+            final int finalMaxScore = maxScore;
+            Move[] filteredMoveList = moveList.stream()
+                .filter(move -> move.score() == finalMaxScore)
+                .toArray(Move[]::new);
+
+            int index = randomGen.nextInt(filteredMoveList.length);
+            Move randomMove = filteredMoveList[index];
+            game.makeMove(randomMove.row(), randomMove.col());
+        }
+
+        private Move analyzeMove(int row, int col, char player) {
+            GameState moveResult = game.analyzeMove(row, col, player);
+            int score = 0;
+            char currentPlayer = game.currentPlayer();
+            boolean haveWinner =
+                moveResult == GameState.X_WINS ||
+                moveResult == GameState.O_WINS;
+
+            if (haveWinner) {
+                score = 1;
+                boolean checkWin =
+                    moveResult == GameState.X_WINS &&
+                    currentPlayer == Game.PLAYER_X;
+                checkWin |=
+                    moveResult == GameState.O_WINS &&
+                    currentPlayer == Game.PLAYER_O;
+
+                if (checkWin) {
+                    score = 2;
+                }
+            }
+
+            return new Move(row, col, score);
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/GameState.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    public enum GameState {
+
+        GAME_NOT_FINISHED("Game not finished"),
+        DRAW("Draw"),
+        X_WINS("X wins"),
+        O_WINS("O wins");
+
+        private final String description;
+
+        GameState(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return description;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/exception/ImpossibleGameFieldStateException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class ImpossibleGameFieldStateException extends RuntimeException {
+    }
+  learner_created: true
+- name: src/tictactoe/Move.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    public class Move {
+
+        private final int row;
+        private final int col;
+        private final int score;
+
+        public Move(int row, int col, int score) {
+            this.row = row;
+            this.col = col;
+            this.score = score;
+        }
+
+        public int row() {
+            return row;
+        }
+
+        public int col() {
+            return col;
+        }
+
+        public int score() {
+            return score;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/player/User.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+
+    import java.util.Scanner;
+
+    public class User extends AbstractPlayer {
+
+        private static final Scanner scanner = new Scanner(System.in);
+
+        public User(Game game) {
+            super(game);
+        }
+
+        @Override
+        public void makeMove() {
+            int[] coordinates = readCoordinates();
+            int row = coordinates[0];
+            int col = coordinates[1];
+            game.makeMove(row, col);
+        }
+
+        private int[] readCoordinates() {
+            while (true) {
+                System.out.print("Enter the coordinates: ");
+                String[] coordinates = scanner.nextLine().split("\\s+");
+                if (coordinates.length != 2) {
+                    System.out.println("You should enter numbers!");
+                    continue;
+                }
+                boolean valid = true;
+                for (String coordinate : coordinates) {
+                    if (!coordinate.matches("\\d")) {
+                        System.out.println("You should enter numbers!");
+                        valid = false;
+                        break;
+                    }
+                    if (!coordinate.matches("[1-3]")) {
+                        System.out.println("Coordinates should be from 1 to 3!");
+                        valid = false;
+                        break;
+                    }
+                }
+                if (!valid) {
+                    continue;
+                }
+                int userCol = Integer.parseInt(coordinates[0]);
+                int userRow = Integer.parseInt(coordinates[1]);
+                int col = toFieldCol(userCol);
+                int row = toFieldRow(userRow);
+                if (!game.isCellEmpty(row, col)) {
+                    System.out.println("This cell is occupied! Choose another one!");
+                    continue;
+                }
+                return new int[]{ row, col };
+            }
+        }
+
+        private int toFieldCol(int userCol) {
+            return userCol - 1;
+        }
+
+        private int toFieldRow(int userRow) {
+            return game.field.rows() - userRow;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/exception/InvalidGameStateException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class InvalidGameStateException extends RuntimeException {
+        public InvalidGameStateException(String message) {
+            super(message);
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/Game.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    import tictactoe.exception.ImpossibleGameFieldStateException;
+    import tictactoe.exception.InvalidMoveException;
+
+    public class Game {
+        public static final char PLAYER_X = 'X';
+        public static final char PLAYER_O = 'O';
+
+        public final GameField field = new GameField();
+
+        public void makeMove(int row, int col) {
+            if (!isCellEmpty(row, col)) {
+                throw new InvalidMoveException("Cell is already occupied!");
+            }
+            field.set(row, col, currentPlayer());
+        }
+
+        public GameState analyzeMove(int row, int col, char player) {
+            if (!isCellEmpty(row, col)) {
+                throw new InvalidMoveException("Cell is already occupied!");
+            }
+            field.set(row, col, player);
+            GameState moveResult = currentState();
+            field.clear(row, col);
+            return moveResult;
+        }
+
+        public boolean isCellEmpty(int row, int col) {
+            return field.isEmpty(row, col);
+        }
+
+        public char currentPlayer() {
+            int countX = field.count(PLAYER_X);
+            int countO = field.count(PLAYER_O);
+            if (countX == countO) {
+                return PLAYER_X;
+            }
+            if (countX > countO) {
+                return PLAYER_O;
+            }
+            throw new ImpossibleGameFieldStateException();
+        }
+
+        public GameState currentState() {
+            boolean xWins = checkWinner(PLAYER_X);
+            boolean oWins = checkWinner(PLAYER_O);
+            if (xWins) {
+                return GameState.X_WINS;
+            }
+            if (oWins) {
+                return GameState.O_WINS;
+            }
+            int countEmpty = field.countEmptyCells();
+            if (countEmpty == 0) {
+                return GameState.DRAW;
+            }
+            return GameState.GAME_NOT_FINISHED;
+        }
+
+        private boolean checkWinner(char player) {
+            return
+                checkRows(player) ||
+                checkCols(player) ||
+                checkDiagonals(player)
+            ;
+        }
+
+        private boolean checkRows(char player) {
+            boolean check = false;
+            for (int row = 0; row < GameField.SIZE; row++) {
+                boolean checkRow = true;
+                for (int col = 0; col < GameField.SIZE; col++) {
+                    checkRow &= field.get(row, col) == player;
+                }
+                check |= checkRow;
+            }
+            return check;
+        }
+
+        private boolean checkCols(char player) {
+            boolean check = false;
+            for (int col = 0; col < GameField.SIZE; col++) {
+                boolean checkCol = true;
+                for (int row = 0; row < GameField.SIZE; row++) {
+                    checkCol &= field.get(row, col) == player;
+                }
+                check |= checkCol;
+            }
+            return check;
+        }
+
+        private boolean checkDiagonals(char player) {
+            boolean check1 = true;
+            boolean check2 = true;
+            for (int r1 = 0; r1 < GameField.SIZE; r1++) {
+                int c2 = GameField.SIZE - r1 - 1;
+                check1 &= field.get(r1, r1) == player;
+                check2 &= field.get(r1, c2) == player;
+            }
+            return check1 || check2;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/exception/InvalidMoveException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class InvalidMoveException extends RuntimeException {
+
+        public InvalidMoveException(String message) {
+            super(message);
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/player/AbstractPlayer.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+
+    public abstract class AbstractPlayer implements Player {
+
+        protected final Game game;
+
+        public AbstractPlayer(Game game) {
+            this.game = game;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/player/HardBot.java
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/81/stages/451/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/81/stages/451/implement">JetBrains
+    Academy</a>
+  time: Wed, 25 Nov 2020 22:44:54 UTC
 record: -1

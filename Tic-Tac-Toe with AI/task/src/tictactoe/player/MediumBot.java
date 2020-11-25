@@ -11,8 +11,8 @@ import java.util.Random;
 public class MediumBot extends AbstractPlayer {
     private static final Random randomGen = new Random();
 
-    public MediumBot(Game game) {
-        super(game);
+    public MediumBot(Game game, char playerSymbol) {
+        super(game, playerSymbol);
     }
 
     @Override
@@ -20,18 +20,17 @@ public class MediumBot extends AbstractPlayer {
         System.out.println("Making move level \"medium\"");
         List<Move> moveList = new ArrayList<>();
         int maxScore = 0;
-        for (int col = 1; col <= 3; col++) {
-            for (int row = 1; row <= 3; row++) {
-                 if (game.isCellEmpty(col, row)) {
-                     Move moveX = analyzeMove(col, row, Game.PLAYER_X);
-                     Move moveO = analyzeMove(col, row, Game.PLAYER_O);
+        for (int row = 0; row < game.field.rows(); row++) {
+            for (int col = 0; col < game.field.cols(); col++) {
+                 if (game.isCellEmpty(row, col)) {
+                     Move moveX = analyzeMove(row, col, Game.PLAYER_X);
+                     Move moveO = analyzeMove(row, col, Game.PLAYER_O);
                      Move moveWithMaxScore = moveX;
                      if (moveO.score() > moveX.score()) {
                          moveWithMaxScore = moveO;
                      }
                      maxScore = Math.max(maxScore, moveWithMaxScore.score());
                      moveList.add(moveWithMaxScore);
-                     moveList.add(new Move(col, row, 0));
                  }
             }
         }
@@ -42,11 +41,11 @@ public class MediumBot extends AbstractPlayer {
 
         int index = randomGen.nextInt(filteredMoveList.length);
         Move randomMove = filteredMoveList[index];
-        game.makeMove(randomMove.col(), randomMove.row());
+        game.makeMove(randomMove.row(), randomMove.col());
     }
 
-    private Move analyzeMove(int col, int row, char player) {
-        GameState moveResult = game.analyzeMove(col, row, player);
+    private Move analyzeMove(int row, int col, char player) {
+        GameState moveResult = game.analyzeMove(row, col, player);
         int score = 0;
         char currentPlayer = game.currentPlayer();
         boolean haveWinner =
@@ -67,6 +66,6 @@ public class MediumBot extends AbstractPlayer {
             }
         }
 
-        return new Move(col, row, score);
+        return new Move(row, col, score);
     }
 }

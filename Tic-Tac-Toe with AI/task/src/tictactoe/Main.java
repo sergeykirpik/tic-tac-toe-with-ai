@@ -1,9 +1,6 @@
 package tictactoe;
 
-import tictactoe.player.EasyBot;
-import tictactoe.player.MediumBot;
-import tictactoe.player.Player;
-import tictactoe.player.User;
+import tictactoe.player.*;
 
 import java.util.Scanner;
 
@@ -17,8 +14,8 @@ public class Main {
         while (true) {
             String[] command = readCommand();
             if ("start".equalsIgnoreCase(command[0])) {
-                players[0] = createPlayer(command[1]);
-                players[1] = createPlayer(command[2]);
+                players[0] = createPlayer(command[1], Game.PLAYER_X);
+                players[1] = createPlayer(command[2], Game.PLAYER_O);
                 playOneGame(players);
             }
             if ("exit".equalsIgnoreCase(command[0])) {
@@ -46,7 +43,7 @@ public class Main {
                 }
                 boolean valid = true;
                 for (int i = 1; i <= 2; i++) {
-                    valid &= command[i].toLowerCase().matches("user|easy|medium");
+                    valid &= command[i].toLowerCase().matches("user|easy|medium|hard");
                 }
                 if (!valid) {
                     System.out.println("Bad parameters!");
@@ -57,15 +54,18 @@ public class Main {
         }
     }
 
-    private static Player createPlayer(String playerType) {
+    private static Player createPlayer(String playerType, char playerSymbol) {
         if ("easy".equalsIgnoreCase(playerType)) {
-            return new EasyBot(game);
+            return new EasyBot(game, playerSymbol);
         }
         if ("medium".equalsIgnoreCase(playerType)) {
-            return new MediumBot(game);
+            return new MediumBot(game, playerSymbol);
+        }
+        if ("hard".equalsIgnoreCase(playerType)) {
+            return new HardBot(game, playerSymbol);
         }
         if ("user".equalsIgnoreCase(playerType)) {
-            return new User(game);
+            return new User(game, playerSymbol);
         }
         throw new RuntimeException("Invalid player type: " + playerType);
     }

@@ -2,13 +2,13 @@ package tictactoe;
 
 public class Move {
 
-    private final int col;
     private final int row;
+    private final int col;
     private final int score;
 
-    public Move(int userCol, int userRow, int score) {
-        col = userCol;
-        row = userRow;
+    public Move(int row, int col, int score) {
+        this.row = row;
+        this.col = col;
         this.score = score;
     }
 

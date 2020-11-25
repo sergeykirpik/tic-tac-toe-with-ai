@@ -9,8 +9,8 @@ public class EasyBot extends AbstractPlayer {
 
     private final Random randomGen = new Random();
 
-    public EasyBot(Game game) {
-        super(game);
+    public EasyBot(Game game, char playerSymbol) {
+        super(game, playerSymbol);
     }
 
     @Override
@@ -20,10 +20,10 @@ public class EasyBot extends AbstractPlayer {
             throw new InvalidGameStateException("No more free cells!");
         }
         while (true) {
-            int col = randomGen.nextInt(3) + 1;
-            int row = randomGen.nextInt(3) + 1;
-            if (game.isCellEmpty(col, row)) {
-                game.makeMove(col, row);
+            int row = randomGen.nextInt(game.field.rows());
+            int col = randomGen.nextInt(game.field.cols());
+            if (game.isCellEmpty(row, col)) {
+                game.makeMove(row, col);
                 break;
             }
         }

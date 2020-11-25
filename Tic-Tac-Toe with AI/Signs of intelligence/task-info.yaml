@@ -368,23 +368,6 @@ files:
         }
     }
   learner_created: true
-- name: src/tictactoe/CellType.java
-  visible: true
-  text: |
-    package tictactoe;
-
-    public enum CellType {
-        EMPTY(' '),
-        X('X'),
-        O('O');
-
-        public final char symbol;
-
-        CellType(char cellSymbol) {
-            this.symbol = cellSymbol;
-        }
-    }
-  learner_created: true
 - name: src/tictactoe/player/User.java
   visible: true
   text: |
@@ -632,5 +615,5 @@ status: Solved
 feedback:
   message: Congratulations! Continue on <a href="https://hyperskill.org/projects/81/stages/450/implement">JetBrains
     Academy</a>
-  time: Wed, 25 Nov 2020 18:26:20 UTC
-record: -1
+  time: Wed, 25 Nov 2020 19:13:41 UTC
+record: 4

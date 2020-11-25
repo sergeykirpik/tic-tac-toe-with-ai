@@ -1,5 +1,7 @@
 tictactoe/player/Player.java
  tictactoe.player.Player
+tictactoe/player/HardBot.java
+ tictactoe.player.HardBot
 tictactoe/player/AbstractPlayer.java
  tictactoe.player.AbstractPlayer
 tictactoe/exception/ImpossibleGameFieldStateException.java
@@ -16,8 +18,6 @@ tictactoe/exception/InvalidMoveException.java
  tictactoe.exception.InvalidMoveException
 tictactoe/player/MediumBot.java
  tictactoe.player.MediumBot
-tictactoe/CellType.java
- tictactoe.CellType
 tictactoe/Main.java
  tictactoe.Main
 tictactoe/GameField.java

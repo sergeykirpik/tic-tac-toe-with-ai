@@ -8,16 +8,16 @@ public class User extends AbstractPlayer {
 
     private static final Scanner scanner = new Scanner(System.in);
 
-    public User(Game game) {
-        super(game);
+    public User(Game game, char playerSymbol) {
+        super(game, playerSymbol);
     }
 
     @Override
     public void makeMove() {
         int[] coordinates = readCoordinates();
-        int userCol = coordinates[0];
-        int userRow = coordinates[1];
-        game.makeMove(userCol, userRow);
+        int row = coordinates[0];
+        int col = coordinates[1];
+        game.makeMove(row, col);
     }
 
     private int[] readCoordinates() {
@@ -46,11 +46,21 @@ public class User extends AbstractPlayer {
             }
             int userCol = Integer.parseInt(coordinates[0]);
             int userRow = Integer.parseInt(coordinates[1]);
-            if (!game.isCellEmpty(userCol, userRow)) {
+            int col = toFieldCol(userCol);
+            int row = toFieldRow(userRow);
+            if (!game.isCellEmpty(row, col)) {
                 System.out.println("This cell is occupied! Choose another one!");
                 continue;
             }
-            return new int[]{ userCol, userRow };
+            return new int[]{ row, col };
         }
+    }
+
+    private int toFieldCol(int userCol) {
+        return userCol - 1;
+    }
+
+    private int toFieldRow(int userRow) {
+        return game.field.rows() - userRow;
     }
 }
