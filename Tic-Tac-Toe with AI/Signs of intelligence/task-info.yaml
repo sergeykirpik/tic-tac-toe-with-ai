@@ -1,0 +1,636 @@
+type: edu
+custom_name: stage4
+files:
+- name: src/tictactoe/Main.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    public class Main {
+        public static void main(String[] args) {
+            // write your code here
+        }
+    }
+  learner_created: false
+- name: test/TicTacToeTest.java
+  visible: false
+  text: |
+    import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
+    import org.hyperskill.hstest.stage.StageTest;
+    import org.hyperskill.hstest.testcase.CheckResult;
+    import org.hyperskill.hstest.testcase.TestCase;
+    import tictactoe.Main;
+
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.util.stream.Collectors;
+
+    enum FieldState {
+        X, O, FREE;
+
+        static FieldState get(char symbol) {
+            switch (symbol) {
+                case 'X': return X;
+                case 'O': return O;
+                case ' ':
+                case '_':
+                    return FREE;
+                default: return null;
+            }
+        }
+    }
+
+    class TicTacToeField {
+
+        final FieldState[][] field;
+
+        TicTacToeField(FieldState[][] field) {
+            this.field = field;
+        }
+
+        boolean equalTo(TicTacToeField other) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (field[i][j] != other.field[i][j]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        boolean hasNextAs(TicTacToeField other) {
+            boolean improved = false;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (field[i][j] != other.field[i][j]) {
+                        if (field[i][j] == FieldState.FREE && !improved) {
+                            improved = true;
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return improved;
+        }
+
+        boolean isCloseTo(TicTacToeField other) {
+            return equalTo(other)
+                || hasNextAs(other)
+                || other.hasNextAs(this);
+        }
+
+        static TicTacToeField parse(String fieldStr) {
+
+            try {
+                List<String> lines = fieldStr
+                    .lines()
+                    .map(String::strip)
+                    .filter(e ->
+                        e.startsWith("|")
+                            && e.endsWith("|"))
+                    .collect(Collectors.toList());
+
+                for (String line : lines) {
+                    if (line.length() != 9) {
+                        throw new WrongAnswer("Line of Tic-Tac-Toe " +
+                            "field should be 9 characters long\n" +
+                            "found " + line.length() + " characters in \"" + line + "\"");
+                    }
+                    for (char c : line.toCharArray()) {
+                        if (c != 'X'
+                            && c != 'O'
+                            && c != '|'
+                            && c != ' '
+                            && c != '_') {
+                            return null;
+                        }
+                    }
+                }
+
+                FieldState[][] field = new FieldState[3][3];
+
+                int y = 2;
+                for (String line : lines) {
+                    char[] cols = new char[] {
+                        line.charAt(2),
+                        line.charAt(4),
+                        line.charAt(6)
+                    };
+
+                    int x = 0;
+                    for (char c : cols) {
+                        FieldState state = FieldState.get(c);
+                        if (state == null) {
+                            return null;
+                        }
+                        field[y][x] = state;
+                        x++;
+                    }
+                    y--;
+                }
+
+                return new TicTacToeField(field);
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+
+        static List<TicTacToeField> parseAll(String output) {
+            List<TicTacToeField> fields = new ArrayList<>();
+
+            List<String> lines = output
+                .lines()
+                .map(String::strip)
+                .filter(e -> e.length() > 0)
+                .collect(Collectors.toList());
+
+            String candidateField = "";
+            boolean insideField = false;
+            for (String line : lines) {
+                if (line.contains("----") && !insideField) {
+                    insideField = true;
+                    candidateField = "";
+                } else if (line.contains("----") && insideField) {
+                    TicTacToeField field = TicTacToeField.parse(candidateField);
+                    if (field != null) {
+                        fields.add(field);
+                    }
+                    insideField = false;
+                }
+
+                if (insideField && line.startsWith("|")) {
+                    candidateField += line + "\n";
+                }
+            }
+
+            return fields;
+        }
+
+    }
+
+
+    class Clue {
+        int x, y;
+        Clue(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    public class TicTacToeTest extends StageTest<Clue> {
+        public TicTacToeTest() throws Exception {
+            super(Main.class);
+        }
+
+        static String[] inputs = new String[] {
+            "1 1", "1 2", "1 3",
+            "2 1", "2 2", "2 3",
+            "3 1", "3 2", "3 3"
+        };
+
+        String iterateCells(String initial) {
+            int index = -1;
+            for (int i = 0; i < inputs.length; i++) {
+                if (initial.equals(inputs[i])) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1) {
+                return "";
+            }
+            String fullInput = "";
+            for (int i = index; i < index + 9; i++) {
+                fullInput += inputs[i % inputs.length] + "\n";
+            }
+            return fullInput;
+        }
+
+        @Override
+        public List<TestCase<Clue>> generate() {
+
+            List<TestCase<Clue>> tests = new ArrayList<>();
+
+            int i = 0;
+            for (String input : inputs) {
+                String fullMoveInput = iterateCells(input);
+
+                String[] strNums = input.split(" ");
+                int x = Integer.parseInt(strNums[0]);
+                int y = Integer.parseInt(strNums[1]);
+
+                if (i % 2 == 1) {
+                    // mix with incorrect data
+                    fullMoveInput = "4 " + i + "\n" + fullMoveInput;
+                }
+
+                String fullGameInput = "";
+                for (int j = 0; j < 9; j++) {
+                    fullGameInput += fullMoveInput;
+                }
+
+                String initial;
+
+                switch (i % 4) {
+                    case 0: initial = "start user easy\n"; break;
+                    case 1: initial = "start easy user\n"; break;
+                    case 2: initial = "start user medium\n"; break;
+                    case 3: initial = "start medium user\n"; break;
+                    default: continue;
+                }
+
+                fullGameInput = initial + fullGameInput + "exit";
+
+                tests.add(new TestCase<Clue>()
+                    .setInput(fullGameInput));
+
+                i++;
+            }
+
+            tests.add(new TestCase<Clue>()
+                .setInput("start easy easy\nexit"));
+
+            tests.add(new TestCase<Clue>()
+                .setInput("start medium medium\nexit"));
+
+            tests.add(new TestCase<Clue>()
+                .setInput("start medium easy\nexit"));
+
+            tests.add(new TestCase<Clue>()
+                .setInput("start easy medium\nexit"));
+
+            tests.add(new TestCase<Clue>()
+                .setInput("start user user\n" +
+                    "1 1\n" +
+                    "2 2\n" +
+                    "1 2\n" +
+                    "2 1\n" +
+                    "1 3\n" +
+                    "exit"));
+
+            return tests;
+        }
+
+        @Override
+        public CheckResult check(String reply, Clue clue) {
+
+            List<TicTacToeField> fields = TicTacToeField.parseAll(reply);
+
+            if (fields.size() == 0) {
+                return new CheckResult(false, "No fields found");
+            }
+
+            for (int i = 1; i < fields.size(); i++) {
+                TicTacToeField curr = fields.get(i - 1);
+                TicTacToeField next = fields.get(i);
+
+                if (!(curr.equalTo(next) || curr.hasNextAs(next))) {
+                    return new CheckResult(false,
+                        "For two fields following each " +
+                            "other one is not a continuation " +
+                            "of the other (they differ more than in two places).");
+                }
+            }
+
+            return CheckResult.correct();
+        }
+    }
+  learner_created: false
+- name: src/tictactoe/GameState.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    public enum GameState {
+
+        GAME_NOT_FINISHED("Game not finished"),
+        DRAW("Draw"),
+        X_WINS("X wins"),
+        O_WINS("O wins");
+
+        private final String description;
+
+        GameState(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return description;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/exception/ImpossibleGameFieldStateException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class ImpossibleGameFieldStateException extends RuntimeException {
+    }
+  learner_created: true
+- name: src/tictactoe/player/EasyBot.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+    import tictactoe.exception.InvalidGameStateException;
+
+    import java.util.Random;
+
+    public class EasyBot implements Player {
+
+        private final Game game;
+        private final Random randomGen = new Random();
+
+        public EasyBot(Game game) {
+            this.game = game;
+        }
+
+        @Override
+        public void makeMove() {
+            System.out.println("Making move level \"easy\"");
+            if (game.field.countEmptyCells() == 0) {
+                throw new InvalidGameStateException("No more free cells!");
+            }
+            while (true) {
+                int col = randomGen.nextInt(3) + 1;
+                int row = randomGen.nextInt(3) + 1;
+                if (game.isCellEmpty(col, row)) {
+                    game.makeMove(col, row);
+                    break;
+                }
+            }
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/CellType.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    public enum CellType {
+        EMPTY(' '),
+        X('X'),
+        O('O');
+
+        public final char symbol;
+
+        CellType(char cellSymbol) {
+            this.symbol = cellSymbol;
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/player/User.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    import tictactoe.Game;
+
+    import java.util.Scanner;
+
+    public class User implements Player {
+
+        private static final Scanner scanner = new Scanner(System.in);
+
+        private final Game game;
+
+        public User(Game game) {
+            this.game = game;
+        }
+
+        @Override
+        public void makeMove() {
+            int[] coordinates = readCoordinates();
+            int userCol = coordinates[0];
+            int userRow = coordinates[1];
+            game.makeMove(userCol, userRow);
+        }
+
+        private int[] readCoordinates() {
+            while (true) {
+                System.out.print("Enter the coordinates: ");
+                String[] coordinates = scanner.nextLine().split("\\s+");
+                if (coordinates.length != 2) {
+                    System.out.println("You should enter numbers!");
+                    continue;
+                }
+                boolean valid = true;
+                for (String coordinate : coordinates) {
+                    if (!coordinate.matches("\\d")) {
+                        System.out.println("You should enter numbers!");
+                        valid = false;
+                        break;
+                    }
+                    if (!coordinate.matches("[1-3]")) {
+                        System.out.println("Coordinates should be from 1 to 3!");
+                        valid = false;
+                        break;
+                    }
+                }
+                if (!valid) {
+                    continue;
+                }
+                int userCol = Integer.parseInt(coordinates[0]);
+                int userRow = Integer.parseInt(coordinates[1]);
+                if (!game.isCellEmpty(userCol, userRow)) {
+                    System.out.println("This cell is occupied! Choose another one!");
+                    continue;
+                }
+                return new int[]{ userCol, userRow };
+            }
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/exception/InvalidGameStateException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class InvalidGameStateException extends RuntimeException {
+        public InvalidGameStateException(String message) {
+            super(message);
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/Game.java
+  visible: true
+  text: |
+    package tictactoe;
+
+    import tictactoe.exception.ImpossibleGameFieldStateException;
+    import tictactoe.exception.InvalidMoveException;
+
+    public class Game {
+        public static final char PLAYER_X = 'X';
+        public static final char PLAYER_O = 'O';
+
+        public final GameField field = new GameField();
+
+        public void makeMove(int userCol, int userRow) {
+            if (!isCellEmpty(userCol, userRow)) {
+                throw new InvalidMoveException("Cell is occupied already!");
+            }
+            int col = toFieldCol(userCol);
+            int row = toFieldRow(userRow);
+            field.set(row, col, currentPlayer());
+        }
+
+        public boolean isCellEmpty(int userCol, int userRow) {
+            int col = toFieldCol(userCol);
+            int row = toFieldRow(userRow);
+            return field.isEmpty(row, col);
+        }
+
+        private int toFieldCol(int userCol) {
+            return userCol - 1;
+        }
+
+        private int toFieldRow(int userRow) {
+            return GameField.SIZE - userRow;
+        }
+
+        public char currentPlayer() {
+            int countX = field.count(PLAYER_X);
+            int countO = field.count(PLAYER_O);
+            if (countX == countO) {
+                return PLAYER_X;
+            }
+            if (countX > countO) {
+                return PLAYER_O;
+            }
+            throw new ImpossibleGameFieldStateException();
+        }
+
+        public GameState currentState() {
+            boolean xWins = checkWinner(PLAYER_X);
+            boolean oWins = checkWinner(PLAYER_O);
+            if (xWins) {
+                return GameState.X_WINS;
+            }
+            if (oWins) {
+                return GameState.O_WINS;
+            }
+            int countEmpty = field.count(CellType.EMPTY);
+            if (countEmpty == 0) {
+                return GameState.DRAW;
+            }
+            return GameState.GAME_NOT_FINISHED;
+        }
+
+        private boolean checkWinner(char player) {
+            return
+                checkRows(player) ||
+                checkCols(player) ||
+                checkDiagonals(player)
+            ;
+        }
+
+        private boolean checkRows(char player) {
+            boolean check = false;
+            for (int row = 0; row < GameField.SIZE; row++) {
+                boolean checkRow = true;
+                for (int col = 0; col < GameField.SIZE; col++) {
+                    checkRow &= field.get(row, col) == player;
+                }
+                check |= checkRow;
+            }
+            return check;
+        }
+
+        private boolean checkCols(char player) {
+            boolean check = false;
+            for (int col = 0; col < GameField.SIZE; col++) {
+                boolean checkCol = true;
+                for (int row = 0; row < GameField.SIZE; row++) {
+                    checkCol &= field.get(row, col) == player;
+                }
+                check |= checkCol;
+            }
+            return check;
+        }
+
+        private boolean checkDiagonals(char player) {
+            boolean check1 = true;
+            boolean check2 = true;
+            for (int r1 = 0; r1 < GameField.SIZE; r1++) {
+                int c2 = GameField.SIZE - r1 - 1;
+                check1 &= field.get(r1, r1) == player;
+                check2 &= field.get(r1, c2) == player;
+            }
+            return check1 || check2;
+        }
+
+    }
+  learner_created: true
+- name: src/tictactoe/player/Player.java
+  visible: true
+  text: |
+    package tictactoe.player;
+
+    public interface Player {
+        void makeMove();
+    }
+  learner_created: true
+- name: src/tictactoe/exception/InvalidMoveException.java
+  visible: true
+  text: |
+    package tictactoe.exception;
+
+    public class InvalidMoveException extends RuntimeException {
+
+        public InvalidMoveException(String message) {
+            super(message);
+        }
+    }
+  learner_created: true
+- name: src/tictactoe/GameField.java
+  visible: true
+  text: "package tictactoe;\n\nimport java.io.ByteArrayOutputStream;\nimport java.io.PrintStream;\n\
+    \npublic class GameField {\n    public static int SIZE = 3;\n\n    private String\
+    \ state = emptyState();\n    \n    public void setState(String state) {\n    \
+    \    this.state = state.replace('_', CellType.EMPTY.symbol);\n    }\n    \n  \
+    \  public char get(int row, int col) {\n        return state.charAt(index(row,\
+    \ col));\n    }\n\n    public void set(int row, int col, char val) {\n       \
+    \ int index = index(row, col);\n        String newState = state.substring(0, index)\
+    \ + val + state.substring(index + 1);\n        setState(newState);\n    }\n\n\
+    \    public void clear() {\n        setState(emptyState());\n    }\n\n    private\
+    \ String emptyState() {\n        return String.valueOf(CellType.EMPTY.symbol).repeat(9);\n\
+    \    }\n\n    public boolean isEmpty(int row, int col) {\n        return get(row,\
+    \ col) == CellType.EMPTY.symbol;\n    }\n\n    public int count(char cellValue)\
+    \ {\n        int count = 0;\n        for (int row = 0; row < SIZE; row++) {\n\
+    \            for (int col = 0; col < SIZE; col++) {\n                if (get(row,\
+    \ col) == cellValue) {\n                    count++;\n                }\n    \
+    \        }\n        }\n        return count;\n    }\n\n    public int count(CellType\
+    \ cellType) {\n        return count(cellType.symbol);\n    }\n\n    public int\
+    \ countEmptyCells() {\n        return count(CellType.EMPTY);\n    }\n\n    @Override\n\
+    \    public String toString() {\n        ByteArrayOutputStream baos = new ByteArrayOutputStream();\n\
+    \        PrintStream out = new PrintStream(baos);\n        out.println(\"-\".repeat(9));\n\
+    \        for (int row = 0; row < SIZE; row++) {\n            out.print(\"| \"\
+    );\n            for (int col = 0; col < SIZE; col++) {\n                out.printf(\"\
+    %c \", get(row, col));\n            }\n            out.println(\"|\");\n     \
+    \   }\n        out.println(\"-\".repeat(9));\n        return baos.toString();\n\
+    \    }\n\n    private int index(int row, int col) {\n        return row * SIZE\
+    \ + col;\n    }\n}\n"
+  learner_created: true
+- name: src/tictactoe/player/MediumBot.java
+  visible: true
+  learner_created: true
+- name: src/tictactoe/player/AbstractPlayer.java
+  visible: true
+  learner_created: true
+- name: src/tictactoe/Move.java
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/projects/81/stages/450/implement#comment
+status: Solved
+feedback:
+  message: Congratulations! Continue on <a href="https://hyperskill.org/projects/81/stages/450/implement">JetBrains
+    Academy</a>
+  time: Wed, 25 Nov 2020 18:26:20 UTC
+record: -1
